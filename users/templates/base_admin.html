@@ -1,0 +1,74 @@
+{% load static %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% bootstrap_messages %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UVA Tours</title>
+
+    <!-- Styles for Navbar -->
+    <style>
+        #customNavbar {
+            background-color: #001F3F !important; /* Navy Blue */
+        }
+        #customNavbar .navbar-brand,
+        #customNavbar .nav-link {
+            color: #FFFFFF !important; /* White text color for contrast */
+        }
+
+        #customNavbar .nav-link:hover {
+            color: #FFA500 !important; /* Hover color is orange */
+        }
+    </style>
+</head>
+
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg" id="customNavbar">
+    <div class="container">
+        <a href="{% url 'home' %}" class="navbar-brand">UVA Tours</a>
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'create_tours' %}" class="nav-link">Tours</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'discovery' %}" class="nav-link">Discovery</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'account_logout' %}" class="nav-link">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<!-- Main Content Area -->
+<div class="container mt-5"> <!-- added a margin-top for some spacing below the navbar -->
+    {% block content %}
+    <!-- Child templates will insert their content here -->
+    {% endblock content %}
+</div>
+
+</body>
+</html>

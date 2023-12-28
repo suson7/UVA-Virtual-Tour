@@ -1,0 +1,32 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+{% csrf_token %}
+
+
+<h4>{{ location.name }}</h4>
+<p>{{ location.address }}</p>
+
+{% if location.votes > 0 %}
+    <h5>Rating: {{ location.rating }} ({{ location.votes }} votes)</h5>
+{% else %}
+  <h6>No ratings yet for this location. Be the first!</h6>
+{% endif %}
+
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<form method="post" action="{% url 'rate_location' pk=location.pk %}">
+    {% csrf_token %}
+    <label for="rating">Rate this location (1-5): </label>
+    <input class = "mx-2" type="number" name="rating" min="1" max="5" required>
+    <button class= "btn btn-sm mb-1 btn-outline-primary" type="submit">Submit Rating</button>
+</form>
+
+{% endblock %}

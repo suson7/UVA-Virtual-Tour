@@ -1,0 +1,167 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discovery</title>
+
+    <!-- Styles for Buttons -->
+    <style>
+        #customButton {
+            background-color: #001F3F !important; /* Navy Blue */
+            color: #FFFFFF !important; /* White text color for contrast */
+        }
+
+        #customButton:hover {
+            background-color: #FFA500 !important; /* Hover background color is orange */
+            color: #FFFFFF !important; /* Black text color for contrast on hover */
+        }
+        #map {
+        height: 450px;
+        width: 100%;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12 text-center">
+{#                <img src="{% static 'path/to/your/thankyou_image.png' %}" alt="Thank You" class="img-fluid">#}
+                <h1>Discovery</h1>
+                <p class="lead">
+                    Welcome to the UVA Tour discovery page! This page will display tours made by current UVA students tailored for different types of users.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <h4>Existing tours</h4>
+    <div id="map"></div>
+    <form id="hiddenForm" action="{% url 'discovery' %}" method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="selectedTour" id="selectedTourInput" value="">
+      <div class="row-cols-2">
+        {% for tour in tours %}
+        <button type = "button" id = "{{tour.tour_name}}" class = "btn btn-primary m-3 tour-button" onclick="setWaypoints('{{tour.tour_name}}')">{{tour.tour_name}}</button>
+        {% endfor %}
+      </div>
+    <button id="selectButton" class="btn btn-outline-success" onclick="selectTour()">Add to Your Tours</button> 
+    </form>
+
+
+    <script>
+
+      let directionsService;
+      let directionsRenderer;
+      let map;
+
+      function initMap() {
+        //const apiKey = 'AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k';
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: 38.0336, lng: -78.5080 },
+          zoom: 12,
+        });
+         directionsService = new google.maps.DirectionsService();
+         directionsRenderer = new google.maps.DirectionsRenderer({
+          map: map,
+        });
+
+        toursData = JSON.parse('{{ tours_serial|escapejs }}');
+        locationsData = JSON.parse('{{ locations_serial|escapejs }}');
+        toursMap = new Map()
+        toursData.forEach(element =>{
+          toursMap.set(element.fields.tour_name,element)
+        });
+        locMap = new Map()
+        locationsData.forEach(element => {
+          locMap.set(element.pk,element)
+        });
+
+        setWaypoints(toursData[0].fields.tour_name);
+      }
+
+      function updateSelectedTour(name){
+        console.log("4")
+        tour = toursMap.get(name)
+        console.log(tour)
+        document.getElementById("selectedTourInput").value = Number(tour.pk)
+        console.log("6")
+      }
+
+      function selectTour(){
+        const hiddenForm = document.getElementById("selectedTourInput");
+        hiddenForm.submit();
+      }
+
+      function setWaypoints(option) {
+        const selectedTour = toursMap.get(option);
+        const waypoints = [];
+
+        for (let i = 0; i < selectedTour.fields.locations.length; i++) {
+          const pk = selectedTour.fields.locations[i];
+          waypoints.push({ location: locMap.get(pk).fields.address });
+        }
+        console.log("1")
+
+        updateDirections(waypoints);
+        setActiveButton(option);
+        updateSelectedTour(option);
+      } 
+
+      function updateDirections(waypoints) {
+        const request = {
+          origin: waypoints[0]['location'],
+          destination: waypoints[waypoints.length-1]['location'],
+          waypoints: waypoints,
+          travelMode: google.maps.TravelMode.WALKING,
+          optimizeWaypoints: true
+        };
+
+        // Request directions
+        directionsService.route(request, function (result, status) {
+          if (status === 'OK') {
+            // Display the route on the map
+            directionsRenderer.setDirections(result);
+          } else {
+            alert('Directions request failed due to ' + status);
+          }
+        });
+
+        console.log("2")
+      }
+
+    function setActiveButton(buttonId) {
+    // Get a list of all buttons with a class name that indicates they are tour buttons.
+    const tourButtons = document.querySelectorAll("tour-button");
+
+    // Deactivate all tour buttons.
+    tourButtons.forEach(button => {
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-outline-primary');
+    });
+
+    // Activate the clicked button.
+    const activeButton = document.getElementById(buttonId);
+    activeButton.classList.remove('btn-outline-primary');
+    activeButton.classList.add('btn-primary');
+
+    console.log("3")
+}
+
+    </script>
+
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k&callback=initMap"
+      type="text/javascript"
+    ></script>
+
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,228 @@
+
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Your UVA Campus Tour</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+    <script>
+        let selected_locations = [];
+
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 38.0336, lng: -78.5080 },
+                zoom: 15,
+            });
+
+            map.addListener('click', function (e) {
+                const latlng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+                const service = new google.maps.places.PlacesService(map);
+                service.nearbySearch({
+                    location: latlng,
+                    radius: '50',
+                    type: ['point_of_interest']
+                }, function (results, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+                        const place = results[0];
+                        addToCurrentTour(place.name, place.vicinity);
+                        updateDirections();
+                    }
+                });
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            });
+
+        }
+
+        function addToCurrentTour(placeName, placeVicinity) {
+            if (!document.getElementById(placeName)) {
+                const listItem = document.createElement("li");
+                listItem.textContent = placeName;
+                listItem.id = placeName;
+                listItem.classList.add("list-group-item");
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.classList.add("btn", "btn-sm", "btn-danger", "float-end");
+                deleteButton.onclick = function () { 
+                    listItem.remove();
+                    selected_locations = selected_locations.filter(loc => loc.name != placeName);
+                    updateDirections();
+                }
+                listItem.appendChild(deleteButton);
+
+                document.getElementById("currentTourList").appendChild(listItem);
+
+                selected_locations.push({ name: placeName, vicinity: placeVicinity });
+            }
+        }
+
+
+        function createTour() {
+            const tourList = document.getElementById('currentTourList');
+            const tourData = [];
+            const tourName = document.getElementById('tourName').value;
+
+            // Check if the tour name is provided
+            if (!tourName) {
+                alert("Please provide a name for your tour!");
+                return;
+            }
+
+            // Gather all current tour locations
+            tourList.querySelectorAll('li').forEach(listItem => {
+                const placeName = listItem.innerText.replace("Delete", "").trim();
+                const place = selected_locations.find(tour => tour.name === placeName);
+
+                if (place) {
+                tourData.push(place); // Include both name and vicinity
+                }
+            });
+
+            // Set the hidden input's value to the gathered data
+            document.getElementById('tourData').value = JSON.stringify(tourData);
+            document.getElementById('tourNameInput').value = tourName;
+
+            // Submit the hidden form
+            document.getElementById('hiddenTourForm').submit();
+        }
+
+
+
+        function handleFormSubmit(event) {
+            event.preventDefault(); // Prevent form from submitting
+
+            const checkboxes = document.querySelectorAll("#tourForm input[type='checkbox']:checked");
+            checkboxes.forEach((checkbox) => {
+                // Get the name and address from the checkbox and hidden input
+                locationsData = JSON.parse('{{ locations_serial|escapejs }}');
+                const curLoc = locationsData.find(location => location.fields.name === checkbox.value);
+                addToCurrentTour(checkbox.value, curLoc.fields.address);
+            });
+            updateDirections();
+        }
+        
+        function updateDirections(){
+
+            const request = {
+            origin: selected_locations[0].vicinity,
+            destination: selected_locations[selected_locations.length-1].vicinity,
+            waypoints: selected_locations.map(location => ({location:location.vicinity})),
+            travelMode: google.maps.TravelMode.WALKING,
+            optimizeWaypoints: true,
+            };
+
+            // Request directions
+            directionsService.route(request, function (result, status) {
+            if (status === 'OK') {
+                // Display the route on the map
+                directionsRenderer.setDirections(result);
+
+            } else {
+                alert('Directions request failed due to ' + status);
+            }
+            });
+        }
+
+        window.initMap = initMap;
+    </script>
+
+    <style>
+        #map {
+            height: 400px;
+        }
+        #customButton {
+            background-color: #001F3F !important; /* Navy Blue */
+            color: #FFFFFF !important; /* White text color for contrast */
+        }
+
+        #customButton:hover {
+            background-color: #FFA500 !important; /* Hover background color is orange */
+            color: #FFFFFF !important; /* Black text color for contrast on hover */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center">Create Your Personalized UVA Tour</h1>
+                <p class="lead">
+                    Welcome to the UVA Tour creator! This page allows current or future students to craft a personalized tour of the UVA campus. By selecting various Points of Interest (POIs), you can design a unique journey that showcases all that UVA has to offer.
+                </p>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div id="map"></div>
+            </div>
+        </div>
+        <!-- Tour Creation Form -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h2>Select Popular Points of Interest</h2>
+                <form id="tourForm" onsubmit="handleFormSubmit(event);">
+                    <div class="row">
+                        <!-- Tour Name Input -->
+                        <div class="mb-3">
+                            <label for="tourName" class="form-label">Name Your Tour:</label>
+                            <input type="text" class="form-control" id="tourName" placeholder="Enter Tour Name">
+                        </div>
+                        <!-- First column -->
+                        <div class="col-md-6">
+                            {% for location in locations_first_half %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="{{ location.name }}" id="location_{{ forloop.counter }}">
+                                <label class="form-check-label" for="location_{{ forloop.counter }}">{{ location.name }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Second Column -->
+                        <div class="col-md-6">
+                            {% for location in locations_second_half %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="{{ location.name }}" id="location_{{ forloop.counter }}">
+                                <label class="form-check-label" for="location_{{ forloop.counter }}">{{ location.name }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                <button type="submit" class="btn btn-primary mt-3" id="customButton">Add to Tour</button>
+                    <button type="button" class="btn btn-success mt-3" id="customButton" onclick="createTour();">Create Tour</button>
+                </form>
+                <form id="hiddenTourForm" method="POST" action="{% url 'create_tours' %}" onsubmit="handleFormSubmit(event);">
+                    {% csrf_token %}
+                    <input type="hidden" id="tourData" name="tourData" value="">
+                    <input type="hidden" id="tourNameInput" name="tourName" value="">
+                </form>
+
+            </div>
+
+            <div class="col-md-6">
+                <h2>Current Tour Locations</h2>
+                <ul id="currentTourList" class="list-group">
+                    <!-- Items get added here automatically -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k&callback=initMap&libraries=places&v=weekly" defer></script>
+</body>
+
+</html>
+
+
+{% endblock %}

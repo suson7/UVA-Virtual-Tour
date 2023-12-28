@@ -1,0 +1,102 @@
+[
+        {
+            "model": "users.location",
+            "pk": 1,
+            "fields": {
+                "name": "Clemons Library",
+                "address": "164 McCormick Rd, Charlottesville, VA",
+                "discovery": true
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 2,
+            "fields": {
+                "name": "Scott Stadium",
+                "address": "1815 Stadium Rd, Charlottesville, VA 22903",
+                "discovery": true
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 3,
+            "fields": {
+                "name": "University Bookstore",
+                "address": "400 Emmet St S, Charlottesville, VA 22903",
+                "discovery": true
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 4,
+            "fields": {
+                "name": "The Rotunda",
+                "address": "1826 University Ave, Charlottesville, VA 22904",
+                "discovery": true
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 5,
+            "fields": {
+                "name": "OHill Dining Hall",
+                "address": "525 McCormick Rd, Charlottesville, VA 22904",
+                "discovery": true
+            }
+        },    
+        {
+            "model": "users.location",
+            "pk": 6,
+            "fields": {
+                "name": "Aquatic and Fitness Center",
+                "address": "450 Whitehead Rd, Charlottesville, VA 22904",
+                "discovery": true
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 7,
+            "fields": {
+                "name": "Beta Bridge",
+                "address": "180 Rugby Rd, Charlottesville, VA",
+                "discovery": false
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 8,
+            "fields": {
+                "name": "Mad Bowl",
+                "address": "155 Rugby Rd, Charlottesville, VA",
+                "discovery": false
+            }
+        },
+        {
+            "model": "users.location",
+            "pk": 9,
+            "fields": {
+                "name": "Bodos",
+                "address": "1609 University Avenue, Charlottesville, VA",
+                "discovery": false
+            }
+        },
+        {
+          "model": "users.tour",
+          "pk": 1,
+          "fields": {
+            "tour_name": "First Year Essentials",
+            "premade": true,
+            "locations": [1, 3, 4]
+          }
+        },
+        {
+          "model": "users.tour",
+          "pk": 2,
+          "fields": {
+            "tour_name": "Iconic UVA locations",
+            "premade": true,
+            "locations": [7, 8, 9]  
+          }
+        }
+]
+

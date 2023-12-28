@@ -1,0 +1,7 @@
+Django>=4.0,<4.1
+psycopg2>=2.9,<3.0  # PostgreSQL adapter for Django
+gunicorn>=20.1,<21.0  # WSGI server for running Django on Heroku
+dj-database-url>=0.5,<0.6  # Database configuration from environment variable
+whitenoise>=5.3,<6.0  # Static file serving
+django-allauth>=0.45,<0.46  # Authentication app
+django-bootstrap5<23.3

@@ -1,0 +1,264 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+{% csrf_token %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save Tours</title>
+
+    <style>
+        #map {
+            height: 100%;
+            width: 50%;
+            float: left;
+        }
+        #info-container {
+            height: 100%;
+            width: 50%;
+            float: right;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            background: #f7f7f7;
+        }
+        .container {
+            max-width: 100vw;
+            overflow: hidden;
+        }
+        #customButton {
+            background-color: #001F3F !important; /* Navy Blue */
+            color: #FFFFFF !important; /* White text color for contrast */
+        }
+
+        #customButton:hover {
+            background-color: #FFA500 !important; /* Hover background color is orange */
+            color: #FFFFFF !important; /* Black text color for contrast on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1>Explore UVA</h1>
+                <p class="lead">
+                    Follow along your tour below to view learn more about the UVA Campus. We hope you enjoy exploring the UVA campus!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="info-container">
+        <h2 id="location-name">Location Information</h2>
+        <p id="location-description">Please proceed to your first waypoint</p>
+    </div>
+
+    <script>
+        let directionsService;
+        let directionsRenderer;
+        let map;
+        let toursMap;
+        let locationsMap;
+        var userMarker;
+        let currentLocation;
+
+function initData(){
+  toursMap = new Map()
+  toursData.forEach(element =>{
+    toursMap.set(element.pk,element)
+  });
+  locMap = new Map()
+  locationsData.forEach(element => {
+    locMap.set(element.pk,element)
+  });
+}
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 38.0336, lng: -78.5080 },
+    zoom: 12,
+  });
+   directionsService = new google.maps.DirectionsService();
+   directionsRenderer = new google.maps.DirectionsRenderer({
+    map: map,
+  });
+
+  option = toursData[0].pk;
+  setLocation();
+}
+
+function setWaypoints() {
+  const selectedTour = toursMap.get(Number(option));
+  const waypoints = [];
+
+  if (userMarker && userMarker.getPosition()) {
+    waypoints.push({
+      location: userMarker.getPosition().toJSON(),
+    });
+  }
+
+  for (let i = 0; i < selectedTour.fields.locations.length; i++) {
+    const pk = selectedTour.fields.locations[i];
+    if (locMap.has(pk)){
+    waypoints.push({ location: locMap.get(pk).fields.address });
+    }
+  }
+
+  const bounds = new google.maps.LatLngBounds();
+
+  // Extend the bounds with the user's location
+  bounds.extend(userMarker.getPosition());
+
+  // Fit the map to the bounds
+  map.fitBounds(bounds);
+
+  updateDirections(waypoints);
+} 
+
+function updateDirections(waypoints) {
+  const request = {
+    origin: waypoints[0]['location'],
+    destination: waypoints[waypoints.length-1]['location'],
+    waypoints: waypoints,
+    travelMode: google.maps.TravelMode.WALKING,
+    optimizeWaypoints: true
+  };
+
+  // Request directions
+  directionsService.route(request, function (result, status) {
+    if (status === 'OK') {
+      // Display the route on the map
+      directionsRenderer.setDirections(result);
+    } else {
+      alert('Directions request failed due to ' + status);
+    }
+  });
+
+}
+
+        toursData = JSON.parse('{{ tour_serial|escapejs }}');
+        console.log(toursData)
+        locationsData = JSON.parse('{{ locations_serial|escapejs }}');
+        initData()
+        //getLatLng()
+        setTimeout(getLatLng,500)
+        setTimeout(setLocation,3000)
+
+        function getLatLng(){
+            for (let i = 0; i < locationsData.length; i++) {                
+                var geocoder = new google.maps.Geocoder();
+                var address = locationsData[i].fields.address;
+                let lat;
+                let lng;
+
+                geocoder.geocode( { 'address': address}, function(results, status) {
+                if (status == google.maps.GeocoderStatus.OK)
+                {
+                    // do something with the geocoded result
+                    //
+                    locationsData[i].fields.lat = results[0].geometry.location.lat()
+                    locationsData[i].fields.lng = results[0].geometry.location.lng()
+                }
+                });
+            }
+        }
+
+
+        function setLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    if (userMarker) {
+                        userMarker.setMap(null);
+                    }
+                    
+                    userMarker = new google.maps.Marker({
+                            position: userLocation,
+                            map: map,
+                            title: 'Your Location',
+                            icon: {
+                                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                scale: 5,
+                            }
+                        });
+
+                    handleNearbyWaypoints();
+
+                    // Update the user marker on the map
+                    userMarker.setPosition(userLocation);
+                    setWaypoints()
+                    map.setCenter(userLocation);
+
+                }, function (error) {
+                    console.error('Error getting user location:', error.message);
+                }, { enableHighAccuracy: true });
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+            }
+        }
+
+        setInterval(setLocation,10000);
+
+        function handleNearbyWaypoints(){
+            for (let i = 0; i < locationsData.length; i++) {
+                let loc = locationsData[i]
+                const waypointLocation = new google.maps.LatLng(loc.fields.lat, loc.fields.lng);
+
+                if (checkProximity(userMarker.getPosition(), waypointLocation, 100)) {
+                    nearbyWaypoint = loc;  // Set the nearby waypoint
+                    const locationDescription = document.getElementById('location-description');
+                    locationDescription.textContent = `Please proceed to your next waypoint.`;
+                    const locationName = document.getElementById('location-name');
+                    locationName.textContent = `You are now at  ${nearbyWaypoint.fields.name}!`
+                    console.log(`User is nearby waypoint ${nearbyWaypoint.fields.name}`);
+                    locMap.delete(loc.pk);
+                    locationsData.splice(i,1)
+                    break;  // Exit the loop if a nearby waypoint is found
+                }
+            }
+        }
+
+        function checkProximity(userLocation, waypointLocation, proximityThreshold) {
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                userLocation,
+                waypointLocation
+            );
+
+            if (distance <= proximityThreshold) {
+                return true;
+            }
+
+            return false;
+        }
+
+    </script>
+
+    <script
+    async
+    defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k&callback=initMap"
+    type="text/javascript"
+    ></script>
+
+<!--<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k&callback=initMap&libraries=places,geometry,directions&v=weekly" defer async></script>-->
+
+
+    <div class="row-cols-1">
+        <br><a href="{% url 'dashboard' %}" class="btn btn-primary mt-3" id="customButton">Exit</a><br><br>
+    </div>
+
+</body>
+</html>
+
+{% endblock %}

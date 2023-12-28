@@ -1,0 +1,42 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You!</title>
+
+    <!-- Styles for Buttons -->
+    <style>
+        #customButton {
+            background-color: #001F3F !important; /* Navy Blue */
+            color: #FFFFFF !important; /* White text color for contrast */
+        }
+
+        #customButton:hover {
+            background-color: #FFA500 !important; /* Hover background color is orange */
+            color: #FFFFFF !important; /* Black text color for contrast on hover */
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12 text-center">
+{#                <img src="{% static 'path/to/your/thankyou_image.png' %}" alt="Thank You" class="img-fluid">#}
+                <h1>Thank You!</h1>
+                <p class="lead">
+                    Your personalized UVA Campus Tour has been successfully created. We hope you enjoy exploring the UVA campus!
+                </p>
+                <a href="{% url 'home' %}" class="btn btn-primary mt-3" id="customButton">Return to Home</a>
+                <a href="{% url 'dashboard' %}" class="btn btn-primary mt-3" id="customButton">View My Tour</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

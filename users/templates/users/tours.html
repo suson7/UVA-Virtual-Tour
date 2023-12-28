@@ -1,0 +1,116 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      #map {
+        height: 450px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Existing tours</h1>
+    <div id="map"></div>
+    <div>
+      <button id="fye" class="btn btn-primary m-3" onclick="setWaypointsOption1()">First Year Essentials</button>
+      <button id="ilog" class="btn btn-primary m-3 " onclick="setWaypointsOption2()">Iconic UVA locations</button>
+    </div>
+
+    <script>
+      
+      let directionsService;
+      let directionsRenderer;
+      let map;
+
+      function initMap() {
+        //const apiKey = 'AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k';
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: 38.0336, lng: -78.5080 },
+          zoom: 12,
+        });
+         directionsService = new google.maps.DirectionsService();
+         directionsRenderer = new google.maps.DirectionsRenderer({
+          map: map,
+        });
+
+        setWaypointsOption1();
+
+
+        // waypoints 
+        const waypoints = [
+          { location: '151 Amphitheater Way, Charlottesville, VA' }, //amp
+          { location: '400 Emmet St S, Charlottesville, VA' }, //bookstore
+          { location: '525 McCormick Rd, Charlottesville, VA' }, //ohill
+          
+        ];
+
+      }
+
+      function setWaypointsOption1() { //first year essentials
+        const waypoints = [
+          { location: '164 McCormick Rd, Charlottesville, VA' }, //clem
+          { location: '400 Emmet St S, Charlottesville, VA' }, //bookstore
+          { location: '525 McCormick Rd, Charlottesville, VA' }, //ohill
+          
+        ];
+        updateDirections(waypoints);
+        setActiveButton("fye");
+      }
+
+      function setWaypointsOption2() { //iconic locations on grounds
+        const waypoints = [
+          { location: '180 Rugby Rd, Charlottesville, VA' }, //beta
+          { location: '155 Rugby Rd, Charlottesville, VA' }, //fralin / madbowl
+          { location: '1609 University Avenue, Charlottesville, VA' }, //bodos/ the corner
+        ];
+
+        updateDirections(waypoints);
+        setActiveButton("ilog");
+      }
+
+      function updateDirections(waypoints) {
+        const request = {
+          origin: '1826 University Ave, Charlottesville, VA',
+          destination: '1826 University Ave, Charlottesville, VA',
+          waypoints: waypoints,
+          travelMode: google.maps.TravelMode.WALKING,
+        };
+
+        // Request directions
+        directionsService.route(request, function (result, status) {
+          if (status === 'OK') {
+            // Display the route on the map
+            directionsRenderer.setDirections(result);
+          } else {
+            alert('Directions request failed due to ' + status);
+          }
+        });
+      }
+
+      function setActiveButton(buttonId) {
+        const fye = document.getElementById("fye")
+        const ilog = document.getElementById("ilog");
+        fye.className = "btn btn-outline-primary m-3";
+        ilog.className = "btn btn-outline-primary m-3";
+
+        const activeButton = document.getElementById(buttonId);
+        activeButton.className = "btn btn-primary m-3";
+
+      }
+
+    </script>
+
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k&callback=initMap"
+      type="text/javascript"
+    ></script>
+  </body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+{% csrf_token %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <!-- Styles for Buttons -->
+    <style>
+        #customButton {
+            background-color: #001F3F !important; /* Navy Blue */
+            color: #FFFFFF !important; /* White text color for contrast */
+        }
+
+        #customButton:hover {
+            background-color: #FFA500 !important; /* Hover background color is orange */
+            color: #FFFFFF !important; /* Black text color for contrast on hover */
+        }
+
+        #map {
+        height: 450px;
+        width: 100%;
+        }
+
+    </style>
+
+</head>
+<body>
+    {% if tours %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1>Dashboard</h1>
+                <p class="lead">
+                    Navigate below to view your personalized UVA Campus Tours. We hope you enjoy exploring the UVA campus!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class= "m-2" id = "map"></div>
+    
+    <div class="container m-4">
+        <p> View one of your created tours or submit them to be viewed on the Discovery page!</p>
+        <!-- Tour Selection Dropdown -->
+        <div class="row-cols-2">
+            <div class="form-group">
+                <label for="tourSelection">Your saved tours:</label>
+                <select class="form-control" id="tourSelection" onchange="updateDirections();">
+                    {% for tour in tours %}
+                    <option value="{{tour.id}}" >{{tour.tour_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    
+        <div id="selectedTour" class="row my-3">
+          <div class="row-cols-2">
+              <button type="submit" id="startButton" class="btn btn-outline-primary" onclick="startTour()">Start</button>
+          </div>
+            <br><br>
+          <div class="row-2">
+              <form id="hiddenForm" action="{% url 'dashboard' %}" method="POST">
+                  {% csrf_token %}
+                  <input type="hidden" name="selectedTour" id="selectedTourInput" value="{{tours.0.id}}">
+                  <input type="hidden" name="formAction" id="formActionInput" value="">
+                  <button id="submitButton" class="btn btn-outline-success" onclick="submitTour()">Submit to Admin</button>
+                  <button id = "deleteButton" class = "btn btn-danger" onclick="deleteTour()">Delete Tour</button>
+              </form>
+          </div>
+      </div>
+
+    </div>
+    {% else %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1>Dashboard</h1>
+                <p class="lead">
+                    Currently, you have not selected any tours. Please either create a tour or select one from discovery!
+                </p>
+                <a href="{% url 'create_tours' %}" class="btn btn-success btn-lg">Create</a>
+                <a href="{% url 'discovery' %}" class="btn btn-success btn-lg">View Existing</a>
+
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    </body>
+    </html>
+
+    <script src="{% static 'googlemap_functions.js' %}"></script>
+
+    <script>
+        toursData = JSON.parse('{{ tours_serial|escapejs }}');
+        locationsData = JSON.parse('{{ locations_serial|escapejs }}');
+        initData()
+    </script>
+
+    <script>
+        document.getElementById('tourSelection').addEventListener('change', function () {
+        option = this.options[this.selectedIndex].value;
+        setWaypoints()
+        document.getElementById('selectedTourInput').value = option;
+      });
+
+      
+      function startTour() {
+        const selectedTourId = document.getElementById('tourSelection').value;
+        if (selectedTourId) {
+          const startTourUrl = `/users/start_tour/${selectedTourId}/`;
+          window.location.href = startTourUrl;
+        } else {
+          alert('Please select a tour to start.');
+        }
+      }
+
+      function updateFormAction(selectElement) {
+        const tourId = selectElement.value;
+        const form = document.getElementById('hiddenForm');
+        form.action = "{% url 'start_tour' 0 %}".replace('/0/', '/' + tourId + '/');
+        document.getElementById('selectedTourInput').value = tourId;
+    }
+
+      function submitTour(){     
+        const hiddenForm = document.getElementById('hiddenForm');
+        document.getElementById('formActionInput').value = "Submit";
+        hiddenForm.submit(); //this submits
+      }
+
+      function deleteTour(){
+        const hiddenForm = document.getElementById('hiddenForm');
+        document.getElementById('formActionInput').value = "Delete";
+        hiddenForm.submit();
+      }
+
+    </script>
+
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDh3ji7kxmqIRdPcuNqFDAnVowUnvCTV5k&callback=initMap"
+      type="text/javascript"
+    ></script>
+</body>
+</html>
+{% endblock %}

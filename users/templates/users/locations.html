@@ -1,0 +1,40 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+{% csrf_token %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<body class="">
+
+    <div class="mb-5">
+        <h3 class="mb-4">Location Search</h3>
+
+        <form method="get" action="{% url 'search_locations' %}" class="mb-4">
+            <div class="input-group">
+                <input type="text" id="search" name="q" value="{{ query }}" class="form-control" placeholder="Search by Name">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+
+        {% if locations %}
+            <h4 class="mb-3">Search Results:</h4>
+            <ul class="list-group">
+                {% for location in locations %}
+                <li class="list-group-item">
+                    <a href="{% url 'location_detail' location.id %}">
+                        <strong>{{ location.name }}</strong>
+                    </a><br>
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+</body>
+
+</html>
+
+{% endblock %}
